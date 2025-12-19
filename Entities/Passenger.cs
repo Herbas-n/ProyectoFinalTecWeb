@@ -16,5 +16,8 @@
         public DateTime? RefreshTokenExpiresAt { get; set; }
         public DateTime? RefreshTokenRevokedAt { get; set; }
         public string? CurrentJwtId { get; set; }
+
+        public string? ResetPasswordToken { get; set; }
+        public DateTime? ResetPasswordTokenExpiresAt { get; set; }
     }
 }
