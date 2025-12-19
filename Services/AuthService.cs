@@ -275,5 +275,38 @@ namespace ProyectoFinalTecWeb.Services
             var bytes = RandomNumberGenerator.GetBytes(64);
             return Base64UrlEncoder.Encode(bytes);
         }
+
+        private static int GetMinutesOfDay()
+        {
+            var now = DateTime.Now;
+            return now.Hour * 60 + now.Minute;
+        }
+        public async Task<int?> ForgotPasswordAsync(ForgotPasswordDto dto)
+        {
+            var passenger = await _passengers.GetByEmailAddress(dto.Email);
+            if(passenger != null)
+            {
+                return GetMinutesOfDay();
+            }
+            return null;
+        }
+        public async Task<bool> ResetPasswordAsync(ResetPasswordDto dto)
+        {
+            var nowMinutes = GetMinutesOfDay();
+            var different = Math.Abs(nowMinutes - dto.Token);
+            if (different > 15) { return false; }
+            var passengers = await _passengers.GetAll();
+            var passenger = passengers.FirstOrDefault();
+            if (passenger != null)
+            {
+                passenger.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+                await _passengers.Update(passenger);
+                return true;
+            }
+
+            return false;
+        }
+
     }
+    
 }

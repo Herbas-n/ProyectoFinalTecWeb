@@ -4,7 +4,7 @@
     {
         public string Email { get; set; }
     }
-   public class RsetPasswordDto
+   public class ResetPasswordDto
     {
         public int Token { get; set; }
         public string NewPassword { get; set; }
