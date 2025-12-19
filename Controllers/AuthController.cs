@@ -63,7 +63,7 @@ namespace ProyectoFinalTecWeb.Controllers
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto dto)
         {
-            var (ok, response) = await _service.ForgotPasswordAsync(dto);
+            var (ok, response) = await _service.ResetPasswordAsync(dto);
             if (!ok || response is null) return Unauthorized();
             return Ok(response);
         }

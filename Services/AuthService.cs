@@ -337,5 +337,45 @@ namespace ProyectoFinalTecWeb.Services
             // Si no es ni driver ni passenger
             return (false, null);
         }
+
+        public async Task<(bool ok, RegisterPassengerDto? response)> ResetPasswordAsync(ResetPasswordRequestDto dto)
+        {
+            
+            var passenger = await _passengers.GetByRefreshToken(dto.RefreshToken);
+            if (passenger != null)
+            {
+                var ok = BCrypt.Net.BCrypt.Verify(dto.Password, passenger.PasswordHash);
+                if (!ok) return (false, null);
+
+                // Generar par access/refresh
+                var (accessToken, expiresIn, jti) = GenerateJwtTokenP(passenger);
+                var refreshToken = GenerateSecureRefreshToken();
+
+                var refreshDays = int.Parse(_configuration["Jwt:RefreshDays"] ?? "14");
+
+                passenger.RefreshToken = refreshToken;
+                passenger.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(refreshDays);
+                passenger.RefreshTokenRevokedAt = null;
+                passenger.CurrentJwtId = jti;
+
+                passenger.PasswordHash = dto.Password;
+
+                await _passengers.Update(passenger);
+
+                var resp = new RegisterPassengerDto
+                {
+                    Name = passenger.Name,
+                    Email = passenger.Email,
+                    Password = passenger.PasswordHash,
+                    Phone = passenger.Phone,
+                    Role = passenger.Role
+                };
+
+                return (true, resp);
+            }
+
+            // Si no es ni driver
+            return (false, null);
+        }
     }
 }
