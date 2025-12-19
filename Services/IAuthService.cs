@@ -1,4 +1,5 @@
-﻿using ProyectoFinalTecWeb.Entities.Dtos.Auth;
+﻿using ProyectoFinalTecWeb.Entities;
+using ProyectoFinalTecWeb.Entities.Dtos.Auth;
 using ProyectoFinalTecWeb.Entities.Dtos.DriverDto;
 using ProyectoFinalTecWeb.Entities.Dtos.PassengerDto;
 
@@ -11,7 +12,8 @@ namespace ProyectoFinalTecWeb.Services
         Task<string> RegisterPassengerAsync(RegisterPassengerDto dto);
         Task<(bool ok, LoginResponseDto? response)> RefreshAsync(RefreshRequestDto dto);
         Task<(bool ok, ForgotToken? response)> ForgotPasswordAsync(ForgotPasswordDto dto);
-        Task<(bool ok, RegisterPassengerDto? response)> ResetPasswordAsync(ResetPasswordRequestDto dto);
+        Task<(bool ok, Passenger? response)> ResetPasswordAsync(ResetPasswordRequestDto dto);
+
 
     }
 }

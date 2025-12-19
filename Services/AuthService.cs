@@ -281,7 +281,7 @@ namespace ProyectoFinalTecWeb.Services
             var key = jwtSection["Key"]!;
             var issuer = jwtSection["Issuer"];
             var audience = jwtSection["Audience"];
-            var expireMinutes = int.Parse(jwtSection["ExpiresMinutes"] ?? "30");
+            var expireMinutes = int.Parse(jwtSection["ExpiresMinutes"] ?? "15");
 
             var jti = Guid.NewGuid().ToString();
 
@@ -316,18 +316,15 @@ namespace ProyectoFinalTecWeb.Services
             {
                 // Generar par access/refresh
                 var (accessToken, expiresIn, jti) = GenerateJwtTokenForgetPassword(passenger);
-                var refreshToken = GenerateSecureRefreshToken();
-                var refreshDays = int.Parse(_configuration["Jwt:RefreshDays"] ?? "14");
-
-                passenger.RefreshToken = refreshToken;
-                passenger.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(refreshDays);
+                
+                passenger.RefreshToken = accessToken;
                 passenger.RefreshTokenRevokedAt = null;
                 passenger.CurrentJwtId = jti;
                 await _passengers.Update(passenger);
 
                 var resp = new ForgotToken
                 {
-                    AccessToken = accessToken
+                    RefreshToken = accessToken
                 };
 
                 return (true, resp);
@@ -338,43 +335,21 @@ namespace ProyectoFinalTecWeb.Services
         }
 
 
-        public async Task<(bool ok, RegisterPassengerDto? response)> ResetPasswordAsync(ResetPasswordRequestDto dto)
+        public async Task<(bool ok, Passenger? response)> ResetPasswordAsync(ResetPasswordRequestDto dto)
         {
             
             var passenger = await _passengers.GetByRefreshToken(dto.RefreshToken);
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+            if (passenger == null) throw new Exception("Passenger doesnt exist.");
+
             if (passenger != null)
             {
-                var ok = BCrypt.Net.BCrypt.Verify(dto.Password, passenger.PasswordHash);
-                if (!ok) return (false, null);
-
-                // Generar par access/refresh
-                var (accessToken, expiresIn, jti) = GenerateJwtTokenP(passenger);
-                var refreshToken = GenerateSecureRefreshToken();
-
-                var refreshDays = int.Parse(_configuration["Jwt:RefreshDays"] ?? "14");
-
-                passenger.RefreshToken = refreshToken;
-                passenger.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(refreshDays);
-                passenger.RefreshTokenRevokedAt = null;
-                passenger.CurrentJwtId = jti;
-
-                passenger.PasswordHash = dto.Password;
-
+                passenger.PasswordHash = hashedPassword;
                 await _passengers.Update(passenger);
-
-                var resp = new RegisterPassengerDto
-                {
-                    Name = passenger.Name,
-                    Email = passenger.Email,
-                    Password = passenger.PasswordHash,
-                    Phone = passenger.Phone,
-                    Role = passenger.Role
-                };
-
-                return (true, resp);
+                return (true, passenger);
             }
 
-            // Si no es ni driver
+            // Si no es passenger
             return (false, null);
         }
     }
