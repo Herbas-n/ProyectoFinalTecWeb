@@ -50,7 +50,13 @@ namespace ProyectoFinalTecWeb.Controllers
         }
 
         // POST: /api/auth/forgot-password
-        
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+        {
+            var (ok, response) = await _service.ForgotPasswordAsync(dto);
+            if (!ok || response is null) return Unauthorized();
+            return Ok(response);
+        }
 
         // POST /api/auth/reset-password
 
