@@ -307,7 +307,7 @@ namespace ProyectoFinalTecWeb.Services
             );
 
             var jwt = new JwtSecurityTokenHandler().WriteToken(token);
-            return (jwt, (int)TimeSpan.FromMinutes(expireMinutes).TotalSeconds, jti);
+            return (jwt, (int)TimeSpan.FromMinutes(expireMinutes).TotalMinutes, jti);
         }
         public async Task<(bool ok, ForgotToken? response)> ForgotPasswordAsync(ForgotPasswordDto dto)
         {
@@ -317,7 +317,6 @@ namespace ProyectoFinalTecWeb.Services
                 // Generar par access/refresh
                 var (accessToken, expiresIn, jti) = GenerateJwtTokenForgetPassword(passenger);
                 var refreshToken = GenerateSecureRefreshToken();
-
                 var refreshDays = int.Parse(_configuration["Jwt:RefreshDays"] ?? "14");
 
                 passenger.RefreshToken = refreshToken;
@@ -334,9 +333,10 @@ namespace ProyectoFinalTecWeb.Services
                 return (true, resp);
             }
 
-            // Si no es ni driver ni passenger
+            // Si no es passenger
             return (false, null);
         }
+
 
         public async Task<(bool ok, RegisterPassengerDto? response)> ResetPasswordAsync(ResetPasswordRequestDto dto)
         {
