@@ -284,27 +284,30 @@ namespace ProyectoFinalTecWeb.Services
         public async Task<int?> ForgotPasswordAsync(ForgotPasswordDto dto)
         {
             var passenger = await _passengers.GetByEmailAddress(dto.Email);
-            if(passenger != null)
-            {
-                return GetMinutesOfDay();
-            }
-            return null;
+            if (passenger == null) return null;
+
+            var token = GetMinutesOfDay();
+
+            passenger.ResetToken = token;
+            passenger.ResetTokenExpiresAt = DateTime.UtcNow.AddMinutes(15);
+
+            await _passengers.Update(passenger);
+            return token;
         }
         public async Task<bool> ResetPasswordAsync(ResetPasswordDto dto)
         {
-            var nowMinutes = GetMinutesOfDay();
-            var different = Math.Abs(nowMinutes - dto.Token);
-            if (different > 15) { return false; }
-            var passengers = await _passengers.GetAll();
-            var passenger = passengers.FirstOrDefault();
-            if (passenger != null)
-            {
-                passenger.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
-                await _passengers.Update(passenger);
-                return true;
-            }
+            var passenger = await _passengers.GetByResetTokenAsync(dto.Token);
+            if (passenger == null) return false;
 
-            return false;
+            if (passenger != null)
+                return false;
+
+            passenger.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+            passenger.ResetToken = null;
+            passenger.ResetTokenExpiresAt = null;
+
+            await _passengers.Update(passenger);
+            return true;
         }
 
     }
