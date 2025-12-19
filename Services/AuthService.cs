@@ -275,5 +275,59 @@ namespace ProyectoFinalTecWeb.Services
             var bytes = RandomNumberGenerator.GetBytes(64);
             return Base64UrlEncoder.Encode(bytes);
         }
+
+        public async Task<(bool ok, ForgotToken? response)> ForgotPasswordAsync(ForgotPasswordDto dto)
+        {
+            // Primero buscar driver
+            var driver = await _drivers.GetByEmailAddress(dto.Email);
+            if (driver != null)
+            {
+                // Generar par access/refresh
+                var (accessToken, expiresIn, jti) = GenerateJwtTokenD(driver);
+                var refreshToken = GenerateSecureRefreshToken();
+
+                var refreshDays = int.Parse(_configuration["Jwt:RefreshDays"] ?? "14");
+
+                driver.RefreshToken = refreshToken;
+                driver.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(refreshDays);
+                driver.RefreshTokenRevokedAt = null;
+                driver.CurrentJwtId = jti;
+                await _drivers.Update(driver);
+
+                var resp = new ForgotToken
+                {
+                    AccessToken = accessToken
+                };
+
+                return (true, resp);
+            }
+
+            // Si no es driver, buscar passenger
+            var passenger = await _passengers.GetByEmailAddress(dto.Email);
+            if (passenger != null)
+            {
+                // Generar par access/refresh
+                var (accessToken, expiresIn, jti) = GenerateJwtTokenP(passenger);
+                var refreshToken = GenerateSecureRefreshToken();
+
+                var refreshDays = int.Parse(_configuration["Jwt:RefreshDays"] ?? "14");
+
+                passenger.RefreshToken = refreshToken;
+                passenger.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(refreshDays);
+                passenger.RefreshTokenRevokedAt = null;
+                passenger.CurrentJwtId = jti;
+                await _passengers.Update(passenger);
+
+                var resp = new ForgotToken
+                {
+                    AccessToken = accessToken
+                };
+
+                return (true, resp);
+            }
+
+            // Si no es ni driver ni passenger
+            return (false, null);
+        }
     }
 }
