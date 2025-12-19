@@ -9,4 +9,10 @@
     {
         public required string AccessToken { get; set; }
     }
+
+    public class ResetPasswordRequestDto
+    {
+        public required string RefreshToken { get; set; }
+        public string Password { get; init; } = string.Empty;
+    }
 }
