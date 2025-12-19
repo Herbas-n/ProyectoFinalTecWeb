@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.AspNetCore.Mvc;
 using ProyectoFinalTecWeb.Entities.Dtos.Auth;
 using ProyectoFinalTecWeb.Entities.Dtos.DriverDto;
 using ProyectoFinalTecWeb.Entities.Dtos.PassengerDto;
@@ -59,7 +60,13 @@ namespace ProyectoFinalTecWeb.Controllers
         }
 
         // POST /api/auth/reset-password
-
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto dto)
+        {
+            var (ok, response) = await _service.ForgotPasswordAsync(dto);
+            if (!ok || response is null) return Unauthorized();
+            return Ok(response);
+        }
 
     }
 }
