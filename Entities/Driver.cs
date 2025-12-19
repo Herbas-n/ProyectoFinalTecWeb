@@ -4,7 +4,7 @@ namespace ProyectoFinalTecWeb.Entities
 {
     public class Driver
     {
-        public Guid Id { get; set; }
+        public Guid Id { get; set; } 
         public string Name { get; set; } = default!;
         public string Licence { get; set; } = default!;
         public string Phone { get; set; } = default!;
@@ -23,5 +23,8 @@ namespace ProyectoFinalTecWeb.Entities
         public DateTime? RefreshTokenExpiresAt { get; set; }
         public DateTime? RefreshTokenRevokedAt { get; set; }
         public string? CurrentJwtId { get; set; }
+
+        public string? ResetPasswordToken { get; set; }
+        public DateTime? ResetPasswordTokenExpiresAt { get; set; }
     }
 }

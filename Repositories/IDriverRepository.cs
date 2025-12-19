@@ -21,6 +21,8 @@ namespace ProyectoFinalTecWeb.Repositories
         Task Delete(Driver driver);
 
         Task<Driver?> GetByEmail(string email);
-        Task<Driver?> GetByRefreshToken(string token);
+
+        Task<Passenger?> GetByResetToken(string token);
+
     }
 }
