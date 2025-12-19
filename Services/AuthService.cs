@@ -275,39 +275,47 @@ namespace ProyectoFinalTecWeb.Services
             var bytes = RandomNumberGenerator.GetBytes(64);
             return Base64UrlEncoder.Encode(bytes);
         }
+        private (string token, int expiresInSeconds, string jti) GenerateJwtTokenForgetPassword(Passenger passenger)
+        {
+            var jwtSection = _configuration.GetSection("Jwt");
+            var key = jwtSection["Key"]!;
+            var issuer = jwtSection["Issuer"];
+            var audience = jwtSection["Audience"];
+            var expireMinutes = int.Parse(jwtSection["ExpiresMinutes"] ?? "30");
 
+            var jti = Guid.NewGuid().ToString();
+
+            var claims = new List<Claim> {
+                new Claim(JwtRegisteredClaimNames.Sub, passenger.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Email, passenger.Email),
+                new Claim(ClaimTypes.Name, passenger.Name),
+                new Claim(ClaimTypes.Role, passenger.Role),
+                new Claim(JwtRegisteredClaimNames.Jti, jti),
+            };
+
+            var keyBytes = Convert.FromBase64String(key);
+            var creds = new SigningCredentials(new SymmetricSecurityKey(keyBytes), SecurityAlgorithms.HmacSha256);
+
+            var expires = DateTime.UtcNow.AddMinutes(expireMinutes);
+
+            var token = new JwtSecurityToken(
+                issuer: issuer,
+                audience: audience,
+                claims: claims,
+                expires: expires,
+                signingCredentials: creds
+            );
+
+            var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+            return (jwt, (int)TimeSpan.FromMinutes(expireMinutes).TotalSeconds, jti);
+        }
         public async Task<(bool ok, ForgotToken? response)> ForgotPasswordAsync(ForgotPasswordDto dto)
         {
-            // Primero buscar driver
-            var driver = await _drivers.GetByEmailAddress(dto.Email);
-            if (driver != null)
-            {
-                // Generar par access/refresh
-                var (accessToken, expiresIn, jti) = GenerateJwtTokenD(driver);
-                var refreshToken = GenerateSecureRefreshToken();
-
-                var refreshDays = int.Parse(_configuration["Jwt:RefreshDays"] ?? "14");
-
-                driver.RefreshToken = refreshToken;
-                driver.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(refreshDays);
-                driver.RefreshTokenRevokedAt = null;
-                driver.CurrentJwtId = jti;
-                await _drivers.Update(driver);
-
-                var resp = new ForgotToken
-                {
-                    AccessToken = accessToken
-                };
-
-                return (true, resp);
-            }
-
-            // Si no es driver, buscar passenger
             var passenger = await _passengers.GetByEmailAddress(dto.Email);
             if (passenger != null)
             {
                 // Generar par access/refresh
-                var (accessToken, expiresIn, jti) = GenerateJwtTokenP(passenger);
+                var (accessToken, expiresIn, jti) = GenerateJwtTokenForgetPassword(passenger);
                 var refreshToken = GenerateSecureRefreshToken();
 
                 var refreshDays = int.Parse(_configuration["Jwt:RefreshDays"] ?? "14");
