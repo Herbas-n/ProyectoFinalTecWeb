@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ProyectoFinalTecWeb.Entities;
 using ProyectoFinalTecWeb.Entities.Dtos.Auth;
 using ProyectoFinalTecWeb.Entities.Dtos.DriverDto;
 using ProyectoFinalTecWeb.Entities.Dtos.PassengerDto;
@@ -48,5 +49,29 @@ namespace ProyectoFinalTecWeb.Controllers
             if (!ok || response is null) return Unauthorized();
             return Ok(response);
         }
+
+            
+        // POST: api/auth/forgot-password
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+        {
+            var token = await _service.ForgotPasswordAsync(dto);
+            if (token == null)
+                return NotFound("Email no registrado");
+
+            return Ok(token);
+        }
+
+        // POST: api/auth/reset-password
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        {
+            var ok = await _service.ResetPasswordAsync(dto);
+            if (!ok)
+                return BadRequest("Token inválido o expirado");
+
+            return Ok("Contraseña actualizada");
+        }
+
     }
 }
